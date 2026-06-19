@@ -1,423 +1,237 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dynamic Form Builder (ReadyNest — Week 1)
 
-## Getting Started
+A full-stack **Dynamic Form Builder** where authenticated users can create, customize, publish, and share forms, while anyone can fill them out **without signing up**. Every response flows back into the owner's dashboard, with analytics, file uploads, and more.
 
-First, run the development server:
+> **Core idea:** Instead of hard-coding forms, the entire form structure is stored as **data** in the database. A single renderer reads that data and displays any form — so one component can render infinitely many different forms. Adding a new field type just means extending that one renderer.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+**Live Demo:** https://ready-nest-task-1.vercel.app
+**Repository:** https://github.com/vishwasPuri-maker/ReadyNest-Task-1
+
+---
+
+## Features
+
+### Authentication
+- Sign up & login with **JWT** stored in secure `httpOnly` cookies
+- **Email verification** at signup using a 6-digit code
+- **Forgot / Reset password** via a secure, time-limited email link
+- Protected routes — only logged-in users can access the dashboard or manage forms
+- Auto-redirect logged-in users away from login/signup
+
+### Form Building
+- **Drag-and-drop builder** — drag field types from a side palette into the form, and reorder fields by dragging
+- **9 field types:** text, email, number, dropdown, checkbox, radio, date, textarea, and **file upload (image/PDF)**
+- Auto-suggested labels when a field type is chosen (still fully editable)
+- **Create, Edit, Delete** forms — editing preserves field IDs so older responses still map correctly
+- **Save as Draft** (private) or **Publish** (generates a public link)
+- **Publish / Unpublish** toggle
+- A scannable **QR code** for every published form
+
+### Responses
+- Public form filling with **no login** + required-field validation
+- Responses stored in the database with a timestamp
+- A responses dashboard with **search**, **filters** (by field value), and **CSV export** (opens in Excel / Numbers)
+- Uploaded files shown as image previews / file links
+
+### Analytics & Real-time
+- Analytics page tracking **views, fills, and conversion rate**
+- Visualized with custom-built **SVG charts** (a donut for conversion + bar charts per form) — no external chart library
+- **Near real-time updates via polling** — new responses update counts/tables and show a toast without a page refresh
+
+### Extras
+- A **Premium Templates** marketplace (free + unlockable templates, pricing-card UI)
+- **Light / Dark mode** (theme persists across sessions)
+- Loading skeletons for smooth navigation
+
+---
+
+## Tech Stack — what & why
+
+| Tool | Used for |
+|------|----------|
+| **Next.js 16** (App Router, React 19) | Full app — frontend pages + backend API routes |
+| **TypeScript** | Type safety across the whole codebase |
+| **Tailwind CSS v4** | All styling and responsive UI |
+| **PostgreSQL (Neon)** | Cloud database |
+| **Prisma ORM** | Data modeling & type-safe DB access |
+| **JWT (jsonwebtoken)** | Authentication (login sessions via httpOnly cookie) |
+| **bcryptjs** | Secure password hashing |
+| **Brevo** | Transactional emails (verification + password reset) |
+| **Cloudinary** | Storing uploaded files (images / PDFs) |
+| **qrcode.react** | Generating QR codes for published forms |
+| **Vercel** | Hosting & CI/CD (auto-deploy from GitHub) |
+
+---
+
+## Folder Structure
+
+```
+form/
+├── prisma/
+│   └── schema.prisma            # DB models: User, Form, Field, Response, TemplatePurchase
+│
+├── src/
+│   ├── app/                     # Next.js App Router (pages + API routes)
+│   │   ├── layout.tsx           # Root layout (fonts, theme init script)
+│   │   ├── page.tsx             # Landing / home page
+│   │   ├── globals.css          # Theme tokens (light/dark) + global styles
+│   │   │
+│   │   ├── login/               # Login page
+│   │   ├── signup/              # Signup page
+│   │   ├── verify-email/        # Enter 6-digit verification code
+│   │   ├── forgot-password/     # Request a reset link
+│   │   ├── reset-password/[token]/  # Set a new password from the email link
+│   │   │
+│   │   ├── dashboard/           # Authenticated area
+│   │   │   ├── layout.tsx       # Dashboard-wide font (Inter)
+│   │   │   ├── loading.tsx      # Skeleton shown while data loads
+│   │   │   ├── page.tsx         # Dashboard home (form cards + stats)
+│   │   │   ├── analytics/       # Views / fills / conversion + charts
+│   │   │   └── templates/       # Templates marketplace
+│   │   │
+│   │   ├── forms/
+│   │   │   ├── new/             # Create form (form builder)
+│   │   │   └── [id]/
+│   │   │       ├── edit/        # Edit an existing form
+│   │   │       └── responses/   # Owner-only responses table
+│   │   │
+│   │   ├── form/[id]/           # PUBLIC form page (no login) — fill & submit
+│   │   │
+│   │   └── api/                 # Backend API routes
+│   │       ├── signup/          # Create account + send verification code
+│   │       ├── login/           # Verify password + issue JWT
+│   │       ├── logout/          # Clear auth cookie
+│   │       ├── verify-email/    # Confirm the 6-digit code
+│   │       ├── forgot-password/ # Email a reset link
+│   │       ├── reset-password/  # Set a new password from token
+│   │       ├── forms/           # POST create form / list
+│   │       │   └── [id]/        # PUT update, PATCH publish toggle, DELETE
+│   │       │       ├── responses/  # POST a response (public) 
+│   │       │       └── view/    # Count a view (public)
+│   │       ├── notifications/   # Recent responses (polled by the dashboard)
+│   │       └── templates/
+│   │           ├── use/         # Clone a template into a new form
+│   │           └── purchase/    # Unlock a premium template
+│   │
+│   ├── components/
+│   │   ├── Navbar.tsx           # Home page navbar
+│   │   ├── ThemeToggle.tsx      # Light / dark switch
+│   │   ├── auth/
+│   │   │   ├── AuthCard.tsx     # Login / signup card (tabbed)
+│   │   │   └── AuthBackground.tsx
+│   │   ├── dashboard/
+│   │   │   ├── Sidebar.tsx
+│   │   │   ├── FormCard.tsx     # Form card (publish, QR, delete, share)
+│   │   │   ├── Charts.tsx       # SVG donut + bar charts
+│   │   │   ├── TemplatesGallery.tsx / TemplateCard.tsx
+│   │   │   ├── LiveUpdates.tsx  # Polling + new-response toasts
+│   │   │   ├── DashboardSkeleton.tsx
+│   │   │   └── LogoutButton.tsx
+│   │   └── forms/
+│   │       ├── FormBuilder.tsx  # Drag-and-drop builder (create + edit)
+│   │       ├── PublicForm.tsx   # Renders & submits a public form
+│   │       └── ResponsesTable.tsx  # Search, filter, CSV export
+│   │
+│   └── lib/                     # Server/shared utilities
+│       ├── prisma.ts            # Prisma client singleton
+│       ├── auth.ts              # JWT sign/verify + cookie config
+│       ├── session.ts          # requireUser / getCurrentUserId helpers
+│       ├── email.ts            # Brevo email sending
+│       ├── cloudinary.ts        # File upload helper
+│       ├── fields.ts            # The 9 field types + helpers
+│       └── templates.ts         # Pre-built form templates
+│
+├── .env                         # Secrets (NOT committed)
+├── next.config.ts
+└── package.json
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-
-Dynamic Form Builder
-
-A full-stack Dynamic Form Builder application where authenticated users can create, manage, publish, and share custom forms. Other users can fill out these forms without logging in, and form owners can view all submitted responses through a dashboard.
-
-Project Overview
-
-This project allows users to:
-
-Create an account and log in
-Build forms dynamically
-Add multiple field types
-Publish forms
-Share form links
-Collect responses
-View submitted responses
-Manage created forms
-Tech Stack
-Frontend
-Next.js
-TypeScript
-Tailwind CSS
-shadcn/ui
-Backend
-Next.js API Routes
-Database
-PostgreSQL (Neon)
-ORM
-Prisma
-Authentication
-JWT Authentication
-Deployment
-Frontend: Vercel
-Database: Neon PostgreSQL
-User Flow
-Step 1: Visit Website
-
-When a user visits the application, they land on the Home Page.
-
-Available actions:
-
-Login
-Sign Up
-Learn About Features
-Step 2: Sign Up
-
-New users create an account.
-
-Required fields:
-
-Name
-Email
-Password
-
-After successful registration:
-
-User account is created
-User can log in
-Step 3: Login
-
-Existing users log in using:
-
-Email
-Password
-
-After successful login:
-
-JWT token is generated
-User is redirected to Dashboard
-Important Rule
-
-Only authenticated users can create and manage forms.
-
-Unauthenticated users cannot:
-
-Create forms
-Edit forms
-Delete forms
-View dashboard
-
-Only logged-in users can access these features.
-
-Step 4: Dashboard
-
-After login, users enter their personal dashboard.
-
-Dashboard Features:
-
-Create New Form
-View Existing Forms
-Edit Forms
-Delete Forms
-View Responses
-
-Each form card contains:
-
-Form Title
-Total Responses
-Edit Button
-Delete Button
-Responses Button
-Step 5: Create New Form
-
-User clicks:
-
-Create Form
-
-A new form builder page opens.
-
-User enters:
-
-Form Title
-Form Description
-
-Example:
-
-Title: Student Registration Form
-
-Description: Fill out your registration details.
-
-Step 6: Dynamic Form Builder
-
-The user builds a form dynamically by adding fields.
-
-Supported Field Types:
-
-Text Field
-
-Example:
-
-Name
-
-[____________]
-
-Email Field
-
-Example:
-
-Email
-
-[____________]
-
-Number Field
-
-Example:
-
-Age
-
-[____________]
-
-Dropdown Field
-
-Example:
-
-Branch
-
-▼ CSE
-▼ IT
-▼ ECE
-
-User can add custom options.
-
-Checkbox Field
-
-Example:
-
-Skills
-
-☑ Java
-
-☑ C++
-
-☑ Python
-
-Multiple selections allowed.
-
-Radio Field
-
-Example:
-
-Gender
-
-○ Male
-
-○ Female
-
-Only one option can be selected.
-
-Date Field
-
-Example:
-
-Date of Birth
-
-[ Select Date ]
-
-Textarea Field
-
-Example:
-
-Feedback
-
-Field Configuration
-
-Each field contains:
-
-Label
-Type
-Required Status
-
-Example:
-
-Label: Name
-
-Type: Text
-
-Required: True
-
-Step 7: Save Form
-
-User clicks:
-
-Save Draft
-
-The complete form structure is stored in PostgreSQL.
-
-Form remains private.
-
-Step 8: Publish Form
-
-User clicks:
-
-Publish
-
-The system generates a public form URL.
-
-Example:
-
-/form/abc123
-
-Anyone with the link can access the form.
-
-Step 9: Share Form
-
-User copies the generated link and shares it.
-
-Example:
-
-https://domain.com/form/abc123
-
-The receiver does not need an account.
-
-Step 10: Public Form Submission
-
-Anyone visiting the form link can:
-
-Fill the form
-Submit responses
-
-No login required.
-
-Example Submission:
-
-Name: Vishwas
-
-Email: abc@gmail.com
-
-Branch: CSE
-
-Step 11: Store Responses
-
-After submission:
-
-Response is validated
-Data is saved in PostgreSQL
-Submission timestamp is stored
-Step 12: View Responses
-
-Form owner opens:
-
-Dashboard → Responses
-
-All submissions are displayed.
-
-Example:
-
-Name	Email	Branch
-Vishwas	abc@gmail.com	CSE
-Rahul	xyz@gmail.com	IT
-Step 13: Manage Forms
-
-Users can:
-
-Edit Form
-
-Modify:
-
-Title
-Description
-Fields
-Delete Form
-
-Remove a form permanently.
-
-View Form
-
-Preview published form.
-
-Database Models
-User
-
-Stores account information.
-
-Fields:
-
-id
-name
-email
-password
-Form
-
-Stores form information.
-
-Fields:
-
-id
-title
-description
-published
-userId
-createdAt
-Field
-
-Stores dynamic form fields.
-
-Fields:
-
-id
-label
-type
-required
-options
-formId
-Response
-
-Stores form submissions.
-
-Fields:
-
-id
-formId
-answers
-createdAt
-Application Routes
-
-Home Page
-
-/
-
-Login
-
-/login
-
-Signup
-
-/signup
-
-Dashboard
-
-/dashboard
-
-Create Form
-
-/forms/new
-
-Edit Form
-
-/forms/[id]/edit
-
-Responses
-
-/forms/[id]/responses
-
-Public Form
-
-/form/[id]
+---
+
+## Database Models (`prisma/schema.prisma`)
+
+- **User** — id, name, email, hashed password, emailVerified, verifyCode, resetToken
+- **Form** — id, title, description, published, views, `userId`, createdAt
+- **Field** — id, label, type, required, options[], `formId`
+- **Response** — id, `formId`, answers (JSON), createdAt
+- **TemplatePurchase** — tracks which premium templates a user has unlocked
+
+Responses store answers as **JSON keyed by field ID** (not label), so renaming a field never breaks old responses.
+
+---
+
+## API Routes
+
+| Method | Route | Purpose | Auth |
+|--------|-------|---------|------|
+| POST | `/api/signup` | Create account + send code | Public |
+| POST | `/api/login` | Login, issue JWT | Public |
+| POST | `/api/logout` | Clear session | Public |
+| POST | `/api/verify-email` | Confirm 6-digit code | Public |
+| POST | `/api/forgot-password` | Email reset link | Public |
+| POST | `/api/reset-password` | Set new password | Public |
+| POST | `/api/forms` | Create a form | Owner |
+| PUT | `/api/forms/[id]` | Update a form | Owner |
+| PATCH | `/api/forms/[id]` | Publish / unpublish | Owner |
+| DELETE | `/api/forms/[id]` | Delete a form | Owner |
+| POST | `/api/forms/[id]/responses` | Submit a response | Public |
+| POST | `/api/forms/[id]/view` | Count a view | Public |
+| GET | `/api/notifications` | Recent responses (polling) | Owner |
+| POST | `/api/templates/use` | Clone a template | Owner |
+| POST | `/api/templates/purchase` | Unlock a premium template | Owner |
+
+---
+
+## Getting Started (Local Setup)
+
+### 1. Clone & install
+```bash
+git clone https://github.com/vishwasPuri-maker/ReadyNest-Task-1.git
+cd ReadyNest-Task-1
+npm install
+```
+
+### 2. Environment variables
+Create a `.env` file in the root:
+```env
+DATABASE_URL="your_postgresql_connection_string"
+JWT_SECRET="any_long_random_string"
+BREVO_API_KEY="your_brevo_api_key"
+BREVO_SENDER_EMAIL="your_verified_sender_email"
+BREVO_SENDER_NAME="Form Builder"
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="your_cloudinary_cloud_name"
+NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET="your_unsigned_upload_preset"
+```
+
+### 3. Set up the database
+```bash
+npx prisma db push      # create the tables in your DB
+```
+
+### 4. Run
+```bash
+npm run dev             # http://localhost:3000
+```
+
+---
+
+## Deployment (Vercel)
+
+1. Push the repo to GitHub
+2. Import the repo on [Vercel](https://vercel.com)
+3. Add the same environment variables in **Project → Settings → Environment Variables**
+4. Deploy — Vercel auto-deploys on every push to `main`
+
+> The build runs `prisma generate && next build` so the Prisma client is always generated on Vercel.
+
+---
+
+## Notes
+
+- Free-tier services are used throughout (Neon, Brevo, Cloudinary, Vercel).
+- Premium template "purchase" is currently a placeholder unlock — a real payment gateway (Razorpay/Stripe) can be plugged into `/api/templates/purchase`.
+- Cloudinary may block PDF delivery by default on new accounts — enable it under **Settings → Security** if needed.
+
+---
+
+Built as the Week 1 project for **ReadyNest**.
