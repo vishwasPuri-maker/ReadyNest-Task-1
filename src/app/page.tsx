@@ -1,65 +1,142 @@
-import Image from "next/image";
+import Link from "next/link";
+import Navbar from "@/components/Navbar";
+
+const whatYouCanBuild = [
+  {
+    title: "Registration Forms",
+    desc: "Create student registrations, event signups, and membership applications.",
+  },
+  {
+    title: "Feedback Forms",
+    desc: "Collect valuable feedback from users, customers, and students.",
+  },
+  {
+    title: "Survey Forms",
+    desc: "Design surveys with multiple question types.",
+  },
+  {
+    title: "Job Application Forms",
+    desc: "Gather applicant information and manage responses from one place.",
+  },
+];
+
+const howItWorks = [
+  {
+    title: "1. Create an Account",
+    desc: "Sign up and access your personal dashboard.",
+  },
+  {
+    title: "2. Build Your Form",
+    desc: "Add text fields, dropdowns, radio buttons, checkboxes, dates, and more.",
+  },
+  {
+    title: "3. Publish & Share",
+    desc: "Generate a public link and share it with anyone.",
+  },
+  {
+    title: "4. Collect Responses",
+    desc: "Receive and manage submissions in real time from your dashboard.",
+  },
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="flex min-h-screen flex-col">
+      <Navbar />
+
+      {/* Hero — hovering the CENTER TEXT reveals the form graphic + the two columns */}
+      <main className="relative flex flex-1 items-center justify-center overflow-hidden px-6">
+        {/* group = the centered text block; only hovering it triggers the reveal */}
+        <div className="group relative animate-fade-up">
+          {/* Background form graphic (blurred, sharpens on hover) */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-1/2 w-[min(94vw,620px)] -translate-x-1/2 -translate-y-1/2 scale-110 opacity-15 blur-md transition-all duration-700 ease-out animate-float group-hover:scale-100 group-hover:opacity-50 group-hover:blur-[1.5px]"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <FormMockup />
+          </div>
+
+          {/* Left column: What You Can Build (to the left of the text) */}
+          <div className="pointer-events-none absolute right-full top-1/2 mr-16 hidden w-72 -translate-y-1/2 -translate-x-6 flex-col gap-6 text-left opacity-0 transition-all duration-500 ease-out group-hover:translate-x-0 group-hover:opacity-100 lg:flex">
+            <SectionLabel>What You Can Build</SectionLabel>
+            {whatYouCanBuild.map((item) => (
+              <Point key={item.title} title={item.title} desc={item.desc} />
+            ))}
+          </div>
+
+          {/* Right column: How It Works (to the right of the text) */}
+          <div className="pointer-events-none absolute left-full top-1/2 ml-16 hidden w-72 -translate-y-1/2 translate-x-6 flex-col gap-6 text-left opacity-0 transition-all duration-500 ease-out group-hover:translate-x-0 group-hover:opacity-100 lg:flex">
+            <SectionLabel>How It Works</SectionLabel>
+            {howItWorks.map((item) => (
+              <Point key={item.title} title={item.title} desc={item.desc} />
+            ))}
+          </div>
+
+          {/* Centered text (the hover target) */}
+          <div className="relative z-10 max-w-2xl text-center">
+            <h1 className="text-5xl font-bold leading-tight sm:text-7xl">
+              Build Forms
+              <br />
+              Effortlessly
+            </h1>
+            <p className="mx-auto mt-6 max-w-md text-sm leading-relaxed text-muted">
+              Create custom forms in minutes — add any field you need, publish
+              with a single click, and share a link anyone can fill without
+              signing up.
+            </p>
+            <Link
+              href="/signup"
+              className="mt-9 inline-block rounded-full bg-accent px-8 py-3.5 text-xs font-semibold tracking-widest text-accent-foreground transition-transform hover:scale-105"
+            >
+              GET STARTED
+            </Link>
+          </div>
         </div>
       </main>
+    </div>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="text-xs font-semibold uppercase tracking-widest text-muted">
+      {children}
+    </div>
+  );
+}
+
+function Point({ title, desc }: { title: string; desc: string }) {
+  return (
+    <div className="flex gap-3">
+      <span className="mt-0.5 text-foreground">→</span>
+      <div>
+        <div className="text-sm font-semibold">{title}</div>
+        <div className="mt-1 text-xs leading-relaxed text-muted">{desc}</div>
+      </div>
+    </div>
+  );
+}
+
+/* A sign-up style form used purely as the background graphic */
+function FormMockup() {
+  return (
+    <div className="rounded-3xl border border-border bg-surface p-10">
+      <div className="mb-8 text-center text-3xl font-bold">Sign Up</div>
+      <div className="space-y-7">
+        <MockField label="Username" />
+        <MockField label="Email" />
+        <MockField label="Password" />
+        <div className="mt-3 h-14 rounded-full bg-accent" />
+      </div>
+    </div>
+  );
+}
+
+function MockField({ label }: { label: string }) {
+  return (
+    <div>
+      <div className="mb-2 text-sm text-muted">{label}</div>
+      <div className="h-12 rounded-lg border border-border bg-input" />
     </div>
   );
 }

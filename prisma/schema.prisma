@@ -1,0 +1,71 @@
+// Prisma schema for the Dynamic Form Builder.
+// Models follow the README: User, Form, Field, Response.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String @id @default(cuid())
+  name     String
+  email    String @unique
+  password String // stored hashed, never plain text
+
+  // Email verification (signup)
+  emailVerified    Boolean   @default(false)
+  verifyCode       String?
+  verifyCodeExpiry DateTime?
+
+  // Password reset
+  resetToken       String?   @unique
+  resetTokenExpiry DateTime?
+
+  forms     Form[]
+  purchases TemplatePurchase[]
+}
+
+model TemplatePurchase {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  templateId String
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, templateId])
+}
+
+model Form {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  published   Boolean    @default(false)
+  views       Int        @default(0)
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fields      Field[]
+  responses   Response[]
+  createdAt   DateTime   @default(now())
+}
+
+model Field {
+  id       String   @id @default(cuid())
+  label    String
+  type     String // text | email | number | dropdown | checkbox | radio | date | textarea
+  required Boolean  @default(false)
+  options  String[] // used by dropdown / checkbox / radio
+  formId   String
+  form     Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+}
+
+model Response {
+  id        String   @id @default(cuid())
+  formId    String
+  form      Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  answers   Json // { fieldId: value }
+  createdAt DateTime @default(now())
+}
